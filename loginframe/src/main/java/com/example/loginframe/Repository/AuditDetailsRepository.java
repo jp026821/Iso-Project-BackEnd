@@ -7,6 +7,9 @@ import java.util.List;
 
 public interface AuditDetailsRepository extends JpaRepository<AuditDetails, Long> {
 
-    List<AuditDetails> findByStatus(String pending);
-}
+    // ✅ For Admin Pending List
+    List<AuditDetails> findByStatus(String status);
 
+    // ✅ For User Notifications
+    List<AuditDetails> findByProfile_LoginEmailOrderByAuditIdDesc(String loginEmail);
+}

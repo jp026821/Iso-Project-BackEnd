@@ -15,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:3000") // ✅ React frontend
 public class AuthanticationController {
 
     @Autowired
@@ -72,8 +73,8 @@ public class AuthanticationController {
             @RequestBody ProfileOrganizationRequest porequest
     ) {
         try {
-            String msg = profileService.saveOrUpdateProfile(porequest); // ✅ NEW
-            return ResponseEntity.ok(msg); // ✅ 200 OK for update too
+            String msg = profileService.saveOrUpdateProfile(porequest);
+            return ResponseEntity.ok(msg);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -125,78 +126,67 @@ public class AuthanticationController {
         }
     }
 
-    /* ================= All Iso_Standards ================= */
+    /* ================= ISO STANDARDS ================= */
     @GetMapping("/iso-standards")
     public ResponseEntity<List<IsoStandardDTO>> getAllIsoStandard() {
-
         List<IsoStandardDTO> isoList = isoStandardService.getAllIsoStandared();
-
         return ResponseEntity.ok(isoList);
     }
 
-    /* ================= create Iso_Standards ================= */
     @PostMapping("/iso-standards/create")
     public ResponseEntity<String> addIsoStandard(@RequestBody IsoStandardDTO dto) {
-
         isoStandardService.addIsoStandard(dto);
-
         return ResponseEntity.ok("ISO Standard saved successfully");
     }
 
-    /* ================= Update Iso_Standards ================= */
     @PutMapping("/iso-standards/update/{id}")
     public ResponseEntity<String> updateIsoStandard(@PathVariable Long id, @RequestBody IsoStandardDTO dto) {
-
         isoStandardService.updateIsoStandard(id, dto);
-
         return ResponseEntity.ok("ISO updated successfully");
     }
 
-    /* ================= Delete Iso_Standards ================= */
     @DeleteMapping("/iso-standards/delete/{id}")
     public ResponseEntity<String> deleteIsoStandard(@PathVariable Long id) {
-
         isoStandardService.deleteIsoStandard(id);
-
         return ResponseEntity.ok("ISO deleted successfully");
     }
 
-    /* ================= Create Audit Details ================= */
+    /* ================= AUDIT DETAILS ================= */
     @PostMapping("/audit-details")
     public ResponseEntity<String> createAudit(@RequestBody AuditDetailDTO dto) {
-
         auditDetailService.saveAuditDetail(dto);
-
         return ResponseEntity.ok("Audit created successfully");
     }
 
     @PutMapping("/audit-details/update/{id}")
-    public ResponseEntity<String> updateAudit(@PathVariable Long id, @RequestBody AuditDetailDTO dto)
-    {
+    public ResponseEntity<String> updateAudit(@PathVariable Long id, @RequestBody AuditDetailDTO dto) {
         auditDetailService.updateAuditDetail(id, dto);
-
-        return ResponseEntity.ok(" Audit Updated Successfully");
+        return ResponseEntity.ok("Audit Updated Successfully");
     }
 
     @DeleteMapping("/audit-details/delete/{id}")
-    public ResponseEntity<String> deleteAudit(@PathVariable long id)
-    {
+    public ResponseEntity<String> deleteAudit(@PathVariable long id) {
         auditDetailService.deleteAudit(id);
-
         return ResponseEntity.ok("Audit Deleted Successfully");
     }
 
+    /* ================= ADMIN: PENDING AUDITS ================= */
     @GetMapping("/pending")
     public ResponseEntity<List<AuditDetailDTO>> getpendingaudit() {
-
         return ResponseEntity.ok(auditDetailService.getPendingAuditsForAdmin());
     }
 
     @PutMapping("/pending/Assigned/{id}")
-    public ResponseEntity<String> assiginAudit(@PathVariable int id, @RequestBody AuditDetailDTO auditDetailDTO)
-    {
-        assiginAuditor.assignAuditor((long) id,auditDetailDTO);
-
+    public ResponseEntity<String> assiginAudit(@PathVariable int id, @RequestBody AuditDetailDTO auditDetailDTO) {
+        assiginAuditor.assignAuditor((long) id, auditDetailDTO);
         return ResponseEntity.ok("Assigned successfully");
+    }
+
+    /* ================= USER: NOTIFICATIONS ================= */
+    // ✅ Frontend should call:
+    // GET http://localhost:8080/api/audit-details/user?loginEmail=abc@gmail.com
+    @GetMapping("/audit-details/user")
+    public ResponseEntity<List<AuditDetailDTO>> getUserNotifications(@RequestParam String loginEmail) {
+        return ResponseEntity.ok(auditDetailService.getUserNotifications(loginEmail));
     }
 }
