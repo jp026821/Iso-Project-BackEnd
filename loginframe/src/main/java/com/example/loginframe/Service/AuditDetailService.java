@@ -124,11 +124,9 @@ public class AuditDetailService {
     // ===================== ADMIN: PENDING AUDITS =====================
     public List<AuditDetailDTO> getPendingAuditsForAdmin() {
 
-        // ✅ Your entity default is "pending", but your admin code checks "Pending"
-        // Use one consistent value. Here we try both to be safe.
         List<AuditDetails> audits = new ArrayList<>();
         try {
-            audits = auditDetailsRepository.findByStatus("Pending");
+            audits = auditDetailsRepository.findByStatus("pending");
         } catch (Exception ignored) {}
 
         if (audits == null || audits.isEmpty()) {
@@ -149,8 +147,7 @@ public class AuditDetailService {
     }
 
     // ===================== USER: NOTIFICATIONS =====================
-    // ✅ Call this from controller:
-    // GET /api/audit-details/user?loginEmail=...
+
     public List<AuditDetailDTO> getUserNotifications(String loginEmail) {
 
         if (loginEmail == null || loginEmail.trim().isEmpty()) return List.of();

@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:3000") // ✅ React frontend
 public class AuthanticationController {
 
     @Autowired
@@ -183,8 +182,6 @@ public class AuthanticationController {
     }
 
     /* ================= USER: NOTIFICATIONS ================= */
-    // ✅ Frontend should call:
-    // GET http://localhost:8080/api/audit-details/user?loginEmail=abc@gmail.com
     @GetMapping("/audit-details/user")
     public ResponseEntity<List<AuditDetailDTO>> getUserNotifications(@RequestParam String loginEmail) {
         return ResponseEntity.ok(auditDetailService.getUserNotifications(loginEmail));

@@ -41,7 +41,7 @@ public class AuditDetails {
     private ProfileEntity profile;
 
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "audit_iso_mapping",
             joinColumns = @JoinColumn(name = "audit_id"),
