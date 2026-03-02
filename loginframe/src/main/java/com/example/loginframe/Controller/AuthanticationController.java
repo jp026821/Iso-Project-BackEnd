@@ -1,5 +1,6 @@
 package com.example.loginframe.Controller;
 
+import com.example.loginframe.Entity.Documents;
 import com.example.loginframe.Entity.ProfileEntity;
 import com.example.loginframe.Entity.ProfileOrganizationRequest;
 import com.example.loginframe.Service.*;
@@ -10,7 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -40,6 +43,9 @@ public class AuthanticationController {
 
     @Autowired
     private AssiginAuditor assiginAuditor;
+
+    @Autowired
+    private DocumentService documentService;
 
     /* ================= LOGIN ================= */
     @PostMapping("/login")
@@ -185,5 +191,24 @@ public class AuthanticationController {
     @GetMapping("/audit-details/user")
     public ResponseEntity<List<AuditDetailDTO>> getUserNotifications(@RequestParam String loginEmail) {
         return ResponseEntity.ok(auditDetailService.getUserNotifications(loginEmail));
+    }
+
+    @PostMapping("/{auditId}/upload")
+    public ResponseEntity<?> uploadeDocuments(@PathVariable Long auditId,@RequestParam("file") MultipartFile file)
+    {
+        try {
+            Documents savedDocument =
+                    documentService.uploadFile(file, auditId);
+
+            return ResponseEntity.ok(savedDocument);
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError()
+                    .body("File upload failed: " + e.getMessage());
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(e.getMessage());
+        }
     }
 }
