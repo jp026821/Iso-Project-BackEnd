@@ -1,77 +1,107 @@
 package com.example.loginframe.Service;
 
-import com.example.loginframe.Configrantion.DocumentConfig;
 import com.example.loginframe.Entity.AuditDetails;
 import com.example.loginframe.Entity.Documents;
 import com.example.loginframe.Repository.AuditDetailsRepository;
 import com.example.loginframe.Repository.DocumentRepository;
+import com.example.loginframe.dto.DocumentDTO;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class DocumentService {
 
-    @Autowired
-    private DocumentRepository documentRepository;
+        @Autowired
+        private DocumentRepository documentRepository;
 
-    @Autowired
-    private DocumentConfig documentConfig;
+        @Autowired
+        private AuditDetailsRepository auditRepository;
 
-    @Autowired
-    private AuditDetailsRepository auditDetailsRepository;
+        // Rolls back everything if anything fails
+        @Transactional
+        public Documents saveDocument(Long auditId, MultipartFile file) throws IOException {
+            // Step 1: Find audit - if not found, throws exception → rollback
+            AuditDetails audit = auditRepository.findById(auditId)
+                    .orElseThrow(() -> new RuntimeException("Audit not found with ID: " + auditId));
 
-    public DocumentService(DocumentRepository documentRepository) {
-        this.documentRepository = documentRepository;
-    }
+            // Step 2: Build document
+            Documents doc = new Documents();
+            doc.setFileName(file.getOriginalFilename());
+            doc.setDocType(file.getContentType());
+            doc.setData(file.getBytes());
+            doc.setAuditDetails(audit);
 
-    public Documents uploadFile(MultipartFile file, Long auditId) throws IOException {
-
-
-        List<String> allowedTypes = Arrays.asList("image/jpeg", "image/png", "application/pdf");
-
-        if (!allowedTypes.contains(file.getContentType())) {
-            throw new RuntimeException("Invalid file type!");
+            // Step 3: Save - if this fails, Step 1 also rolls back
+            return documentRepository.save(doc);
         }
 
-        String originalFileName = new File(file.getOriginalFilename()).getName();
-
-        // 3️⃣ Generate unique filename
-        String uniqueFileName = UUID.randomUUID().toString()
-                + "_" + originalFileName;
-
-        // 4️⃣ Get upload directory
-        String uploadDir = documentConfig.getUploadDir();
-
-        File directory = new File(uploadDir);
-        if (!directory.exists()) {
-            directory.mkdirs();
+        // Read-only transaction (better performance for fetch queries)
+        @Transactional(readOnly = true)
+        public List<Documents> getDocumentsByAuditId(Long auditId) {
+            return documentRepository.findByAuditDetails_AuditId(auditId);
         }
 
-        // 5️⃣ Save file to disk
-        String fullPath = uploadDir + File.separator + uniqueFileName;
-        file.transferTo(new File(fullPath));
+        @Transactional(readOnly = true)
+        public Documents getDocumentById(Long docId) {
+            return documentRepository.findById(docId)
+                    .orElseThrow(() -> new RuntimeException("Document not found"));
+        }
 
 
-        Documents document = new Documents();
-        document.setFileName(uniqueFileName);
-        document.setOriginalFileName(originalFileName);
-        document.setFileType(file.getContentType());
-        document.setFileSize(file.getSize());
-        document.setUploadedAt(LocalDateTime.now());
-
-        AuditDetails auditDetails = auditDetailsRepository.findById(auditId)
-                .orElseThrow(() -> new RuntimeException("Audit not found"));
-
-        document.setAuditDetails(auditDetails);
-
-        return documentRepository.save(document);
+    // Admin rejects document
+    public void rejectDocument(Long docId, String comment) {
+        Documents doc = documentRepository.findById(docId)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+        doc.setStatus("Rejected");
+        doc.setAdminComment(comment);
+        documentRepository.save(doc);
     }
-}
+
+    // Admin approves document
+    public void approveDocument(Long docId) {
+        Documents doc = documentRepository.findById(docId)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+        doc.setStatus("Approved");
+        doc.setAdminComment(null);
+        documentRepository.save(doc);
+    }
+
+
+
+    // User re-uploads - reset status back to Pending
+    public Documents reUploadDocument(Long docId, MultipartFile file) throws IOException {
+        Documents doc = documentRepository.findById(docId)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+        doc.setFileName(file.getOriginalFilename());
+        doc.setDocType(file.getContentType());
+        doc.setData(file.getBytes());
+        doc.setStatus("Resubmitted");       // ✅ back to pending so admin reviews again
+        doc.setAdminComment(null);      // ✅ clear old comment
+        return documentRepository.save(doc);
+    }
+
+
+
+    public List<DocumentDTO> getRejectedDocumentsByAuditId(Long auditId) {
+        return documentRepository
+                .findByAuditDetails_AuditIdAndStatus(auditId, "Rejected")
+                .stream()
+                .map(doc -> new DocumentDTO(
+                        doc.getId(),
+                        doc.getFileName(),
+                        doc.getDocType(),
+                        doc.getStatus(),
+                        doc.getAdminComment()
+                ))
+                .toList();    }
+
+
+
+    }
+

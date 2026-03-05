@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -27,4 +28,5 @@ public class AuditDetailDTO {
 
     private List<String> isoStandards;
 
+    private List<DocumentDTO> documents = new ArrayList<>();
 }

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -49,5 +51,7 @@ public class AuditDetails {
     )
     private Set<IsoStandard> isoStandards;
 
+    @OneToMany(mappedBy = "auditDetails", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Documents> documents = new ArrayList<>();
 
 }

@@ -1,5 +1,6 @@
 package com.example.loginframe.Controller;
 
+import com.example.loginframe.Entity.AuditDetails;
 import com.example.loginframe.Entity.Documents;
 import com.example.loginframe.Entity.ProfileEntity;
 import com.example.loginframe.Entity.ProfileOrganizationRequest;
@@ -8,13 +9,17 @@ import com.example.loginframe.dto.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -158,9 +163,14 @@ public class AuthanticationController {
 
     /* ================= AUDIT DETAILS ================= */
     @PostMapping("/audit-details")
-    public ResponseEntity<String> createAudit(@RequestBody AuditDetailDTO dto) {
-        auditDetailService.saveAuditDetail(dto);
-        return ResponseEntity.ok("Audit created successfully");
+    public ResponseEntity<Map<String, Object>> createAudit(@RequestBody AuditDetailDTO dto) {
+        AuditDetails saved = auditDetailService.saveAuditDetail(dto);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("auditId", saved.getAuditId());
+        response.put("message", "Audit created successfully");
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/audit-details/update/{id}")
@@ -193,22 +203,79 @@ public class AuthanticationController {
         return ResponseEntity.ok(auditDetailService.getUserNotifications(loginEmail));
     }
 
-    @PostMapping("/{auditId}/upload")
-    public ResponseEntity<?> uploadeDocuments(@PathVariable Long auditId,@RequestParam("file") MultipartFile file)
+    /*===================== USER: UPLOAD DOCUMENTS =================== */
+    @PostMapping("/{auditId}/documents/upload")
+    public ResponseEntity<String> uploadDocument(@PathVariable Long auditId,@RequestParam("file") MultipartFile file)
     {
         try {
-            Documents savedDocument =
-                    documentService.uploadFile(file, auditId);
-
-            return ResponseEntity.ok(savedDocument);
-
-        } catch (IOException e) {
-            return ResponseEntity.internalServerError()
-                    .body("File upload failed: " + e.getMessage());
-
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(e.getMessage());
+            Documents saved = documentService.saveDocument(auditId, file);
+            return ResponseEntity.ok("Document saved with ID: " + saved.getId());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Upload failed: " + e.getMessage());
         }
     }
+
+    // Get all documents for a specific audit
+    @GetMapping("/{auditId}/documents")
+    public ResponseEntity<List<Map<String, Object>>> getDocuments(@PathVariable Long auditId) {
+        List<Documents> docs = documentService.getDocumentsByAuditId(auditId);
+
+        // Return metadata only (not binary data in list)
+        List<Map<String, Object>> response = docs.stream().map(doc -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", doc.getId());
+            map.put("fileName", doc.getFileName());
+            map.put("fileType", doc.getDocType());
+            map.put("downloadUrl", "/api/audit/" + auditId + "/documents/" + doc.getId());
+            return map;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Download/view a specific document
+    @GetMapping("/{auditId}/documents/{docId}")
+    public ResponseEntity<byte[]> getDocument(@PathVariable Long auditId,@PathVariable Long docId)
+    {
+        Documents doc = documentService.getDocumentById(docId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(doc.getDocType()))
+                .body(doc.getData());
+    }
+
+    // Show User All Rejected Documents
+    @GetMapping("/{auditId}/documents/rejected")
+    public ResponseEntity<List<DocumentDTO>> getRejectedDocuments(@PathVariable Long auditId) {
+        return ResponseEntity.ok(documentService.getRejectedDocumentsByAuditId(auditId));
+    }
+
+
+    // Admin rejects a document with comment
+    @PutMapping("/{auditId}/documents/{docId}/reject")
+    public ResponseEntity<String> rejectDocument(@PathVariable Long auditId, @PathVariable Long docId,
+            @RequestBody Map<String, String> body) {
+        try {
+            String comment = body.get("adminComment");
+            documentService.rejectDocument(docId, comment);
+            return ResponseEntity.ok("Document rejected");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
+
+    // Admin approves a document
+    @PutMapping("/{auditId}/documents/{docId}/approve")
+    public ResponseEntity<String> approveDocument(@PathVariable Long auditId, @PathVariable Long docId) {
+        try {
+            documentService.approveDocument(docId);
+            return ResponseEntity.ok("Document approved");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
+
+
+
+
+
 }

@@ -7,6 +7,7 @@ import com.example.loginframe.Repository.AuditDetailsRepository;
 import com.example.loginframe.Repository.IsoStandardRepository;
 import com.example.loginframe.Repository.ProfileRepository;
 import com.example.loginframe.dto.AuditDetailDTO;
+import com.example.loginframe.dto.DocumentDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,7 @@ public class AuditDetailService {
     private IsoStandardRepository isoStandardRepository;
 
     // ===================== CREATE =====================
-    public void saveAuditDetail(AuditDetailDTO dto) {
+    public AuditDetails saveAuditDetail(AuditDetailDTO dto) {
 
         AuditDetails audit = new AuditDetails();
 
@@ -36,8 +37,6 @@ public class AuditDetailService {
         audit.setScope(dto.getScope());
         audit.setNotes(dto.getNotes());
 
-        // ✅ keep status consistent
-        // If DTO is null/blank, default to "Pending"
         String status = (dto.getStatus() == null || dto.getStatus().trim().isEmpty())
                 ? "Pending"
                 : dto.getStatus().trim();
@@ -56,10 +55,8 @@ public class AuditDetailService {
                 String code = isoCode.trim();
                 if (code.isEmpty()) continue;
 
-                // ✅ no casting needed
                 IsoStandard iso = isoStandardRepository.findByIsoCode(isoCode)
                         .orElseThrow(() -> new RuntimeException("ISO not found"));
-
                 isoSet.add(iso);
             }
         }
@@ -67,7 +64,7 @@ public class AuditDetailService {
         audit.setIsoStandards(isoSet);
         audit.setProfile(profile);
 
-        auditDetailsRepository.save(audit);
+        return auditDetailsRepository.save(audit); // ✅ return saved entity
     }
 
     // ===================== UPDATE =====================
@@ -193,6 +190,21 @@ public class AuditDetailService {
 
         dto.setIsoStandards(isoCodes);
 
+        // ✅ Add documents to dto
+        List<DocumentDTO> docList = (audit.getDocuments() == null)
+                ? new ArrayList<>()
+                : audit.getDocuments().stream()
+                .map(doc -> new DocumentDTO(
+                        doc.getId(),
+                        doc.getFileName(),
+                        doc.getDocType(),
+                        doc.getStatus(),
+                        doc.getAdminComment()
+                ))
+                .toList();
+        dto.setDocuments(docList);
+
         return dto;
+
     }
 }

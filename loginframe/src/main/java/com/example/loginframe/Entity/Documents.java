@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -16,24 +15,23 @@ import java.time.LocalDateTime;
 @Table(name = "documents")
 public class Documents {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-    @Column(nullable = false)
-    private String fileName;
+        private String fileName;
+        private String docType;
 
+        @Lob
+        @Column(columnDefinition = "LONGBLOB")
+        private byte[] data;
 
-    private String originalFileName;
-    private String fileType;
-    private Long fileSize;
-    private String documentCategory;
-    private Integer version;
-    private Long uploadedBy;
-    private LocalDateTime uploadedAt;
+        private String status = "Pending";   // Pending, Approved, Rejected
+        private String adminComment;
 
-    @ManyToOne
-    @JoinColumn(name = "audit_id", nullable = false)
-    private AuditDetails auditDetails;
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "audit_id", nullable = false)
+        private AuditDetails auditDetails;
+
 
 }
