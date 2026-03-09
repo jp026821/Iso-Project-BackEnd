@@ -75,7 +75,7 @@ public class AuditDetailService {
         audit.setProfile(profile);
 
 
-        return auditDetailsRepository.save(audit); // ✅ return saved entity
+        return auditDetailsRepository.save(audit);
 
     }
 
@@ -126,33 +126,12 @@ public class AuditDetailService {
         return auditDetailsRepository.save(audit);
     }
 
-    // ===================== DELETE =====================
-    public void deleteAudit(long id) {
-        if (!auditDetailsRepository.existsById(id)) {
-            throw new RuntimeException("Audit not found");
-        }
-        auditDetailsRepository.deleteById(id);
-    }
-
     // ===================== ADMIN: PENDING AUDITS =====================
     public List<AuditDetailDTO> getPendingAuditsForAdmin() {
-
-        List<AuditDetails> audits;
-
-        try {
-            audits = auditDetailsRepository.findByStatus("pending");
-        } catch (Exception ignored) {
-            audits = List.of();
-        }
-
-        if (audits == null) audits = List.of();
-
-        List<AuditDetailDTO> dtoList = new ArrayList<>();
-        for (AuditDetails audit : audits) {
-            dtoList.add(toDto(audit, true));
-        }
-
-        return dtoList;
+        return auditDetailsRepository.findAuditsWithPendingDocuments()
+                .stream()
+                .map(audit -> toDto(audit, true))
+                .toList();
     }
 
     // ===================== USER: NOTIFICATIONS =====================

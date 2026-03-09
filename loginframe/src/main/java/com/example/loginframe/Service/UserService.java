@@ -21,6 +21,7 @@ public class UserService {
         this.roleRepository = roleRepository;
     }
 
+    // It gives all users signup in website
     public List<AdminUserResponse> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(u -> new AdminUserResponse(
@@ -34,7 +35,7 @@ public class UserService {
                 .toList();
     }
 
-    public AdminUserResponse updateUser(int id, UpdateUserRequest req) {
+    public AdminUserResponse updateUser(Long id, UpdateUserRequest req) {
         User u = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -61,7 +62,7 @@ public class UserService {
     }
 
 
-    public void deleteUser(int id) {
+    public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("User not found");
         }

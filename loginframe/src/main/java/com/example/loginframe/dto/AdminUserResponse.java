@@ -6,7 +6,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AdminUserResponse {
-    private int id;
+    private Long id;
     private String firstName;
     private String lastName;
     private String email;

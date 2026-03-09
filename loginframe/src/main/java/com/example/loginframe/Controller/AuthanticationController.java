@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,15 +25,24 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 public class AuthanticationController {
 
-    @Autowired private ProfileService profileService;
-    @Autowired private SignupService signupService;
-    @Autowired private LoginService loginService;
-    @Autowired private UserService userService;
-    @Autowired private EmployeSignupService employeSignupService;
-    @Autowired private IsoStandardService isoStandardService;
-    @Autowired private AuditDetailService auditDetailService;
-    @Autowired private AssiginAuditor assiginAuditor;
-    @Autowired private DocumentService documentService;
+    @Autowired
+    private ProfileService profileService;
+    @Autowired
+    private SignupService signupService;
+    @Autowired
+    private LoginService loginService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private EmployeSignupService employeSignupService;
+    @Autowired
+    private IsoStandardService isoStandardService;
+    @Autowired
+    private AuditDetailService auditDetailService;
+    @Autowired
+    private AssiginAuditor assiginAuditor;
+    @Autowired
+    private DocumentService documentService;
 
     /* ================= LOGIN ================= */
     @PostMapping("/login")
@@ -52,8 +60,14 @@ public class AuthanticationController {
     /* ================= SIGNUP ================= */
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody SignupRequest request) {
-        signupService.signup(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Signup successful");
+        String result = signupService.signup(request);
+
+        if (result.equals("Signup successful")) {
+            return ResponseEntity.ok(result);
+        } else {
+            return ResponseEntity.badRequest().body(result);
+        }
+
     }
 
     /* ================= PROFILE ================= */
@@ -83,13 +97,10 @@ public class AuthanticationController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @PutMapping("/users/{id}")
-    public ResponseEntity<AdminUserResponse> updateUser(@PathVariable int id, @RequestBody UpdateUserRequest req) {
-        return ResponseEntity.ok(userService.updateUser(id, req));
-    }
+
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<String> delete(@PathVariable int id) {
+    public ResponseEntity<String> delete(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok("Deleted successfully");
     }
@@ -150,12 +161,6 @@ public class AuthanticationController {
         return ResponseEntity.ok("Audit Updated Successfully");
     }
 
-    @DeleteMapping("/audit-details/delete/{id}")
-    public ResponseEntity<String> deleteAudit(@PathVariable long id) {
-        auditDetailService.deleteAudit(id);
-        return ResponseEntity.ok("Audit Deleted Successfully");
-
-    }
 
     /* ================= ADMIN: PENDING AUDITS ================= */
     @GetMapping("/pending")

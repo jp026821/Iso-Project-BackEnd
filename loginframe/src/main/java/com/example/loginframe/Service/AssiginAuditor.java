@@ -18,7 +18,7 @@ public class AssiginAuditor {
                 .orElseThrow(() -> new RuntimeException("Audit not found"));
 
         audit.setAssignedAuditor(dto.getAssignedAuditor());
-        audit.setStatus(dto.getStatus());
+        audit.setStatus("Approved");
         audit.setAdminComment(dto.getAdminComment());
 
         auditDetailsRepository.save(audit);
