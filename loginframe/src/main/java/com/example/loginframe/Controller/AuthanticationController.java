@@ -259,7 +259,7 @@ public class AuthanticationController {
     }
 
 
-    @PostMapping("/contact/save")
+    @PostMapping("/contact")
     public ResponseEntity<?> saveContact(@Valid @RequestBody ContactDto contactDto) {
         try {
             ContactDto savedContact = contactService.saveContact(contactDto);
@@ -270,6 +270,26 @@ public class AuthanticationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to save contact details");
         }
+    }
+    // Feedback
+    @Autowired
+    private FeedbackService feedbackService;
+
+    @PostMapping("/feedback")
+    public ResponseEntity<?> saveFeedback(@Valid @RequestBody FeedbackDto feedbackDto) {
+        try {
+            FeedbackDto saved = feedbackService.saveFeedback(feedbackDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to save feedback: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/feedback")
+    public ResponseEntity<List<FeedbackDto>> getAllFeedback() {
+        return ResponseEntity.ok(feedbackService.getAllFeedback());
     }
 
 
