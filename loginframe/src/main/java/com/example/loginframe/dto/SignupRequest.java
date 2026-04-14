@@ -29,6 +29,6 @@ public class SignupRequest {
     @NotBlank(message = "Please confirm your password")
     private String confirmPassword;
 
-    private int roleid;
+    private Integer roleid;
 }
 

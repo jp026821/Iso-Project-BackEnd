@@ -44,6 +44,15 @@ public class UserController {
         }
     }
 
+    // ── Update existing employee by ID ──
+    @PutMapping("/update/{id}")
+    public ResponseEntity<String> updateEmployee(
+            @PathVariable Long id,
+            @RequestBody SignupRequest request) {
+        String result = employeSignupService.updateEmployee(id, request);
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/user/products")
     public ResponseEntity<List<String>> getProducts() {
         return ResponseEntity.ok(List.of(

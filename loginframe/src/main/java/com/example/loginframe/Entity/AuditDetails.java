@@ -47,6 +47,9 @@ public class AuditDetails {
 
     private String loginEmail;
 
+    @Column(name = "update_time")
+    private LocalDate updateTime;
+
     @ManyToOne
     @JoinColumn(name = "profile_id")
     private ProfileEntity profile;

@@ -14,6 +14,7 @@ import com.example.loginframe.dto.DocumentDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,6 +93,11 @@ public class AuditorService {
         validateAuditor(audit, request.getAuditorEmail());
 
         audit.setStatus(request.getStatus());
+
+        // ✅ Stamp updateTime when status becomes "completed"
+        if ("completed".equalsIgnoreCase(request.getStatus()) && audit.getUpdateTime() == null) {
+            audit.setUpdateTime(LocalDate.now());
+        }
 
         if (request.getMessage() != null && !request.getMessage().trim().isEmpty()) {
             audit.setAuditorComment(request.getMessage());
